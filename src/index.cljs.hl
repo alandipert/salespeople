@@ -3,7 +3,7 @@
             [goog.string.format]
             [goog.string :as gstr]))
 
-(when (-> js/window .-location .-hostname (= "localhost")) (reload-all))
+(reload-all)
 
 ;;; cells
 
@@ -22,13 +22,15 @@
 
 ;;; input handlers
 
-(defn v [e] (-> this .-target js/jQuery .val))
+(extend-type js/jQuery.Event
+  cljs.core/IDeref
+  (-deref [e] (-> e .-target js/jQuery .val)))
 
 (defn change-commission! [e]
-  (reset! commission-rate (new js/Number (v e))))
+  (reset! commission-rate (new js/Number @e)))
 
 (defn change-sales! [idx e]
-  (swap! persons assoc-in [idx :sales] (v e)))
+  (swap! persons assoc-in [idx :sales] @e))
 
 ;;; markup
 
