@@ -1,0 +1,63 @@
+(page "index.html"
+  (:require [tailrecursion.hoplon.reload :refer [reload-all]]
+            [goog.string.format]
+            [goog.string :as gstr]))
+
+(when (-> js/window .-location .-hostname (= "localhost")) (reload-all))
+
+;;; cells
+
+(defc persons
+  [{:name "Jim"
+    :region "South"
+    :sales 200000}
+   {:name "Jack"
+    :region "North"
+    :sales 150000}
+   {:name "Joe"
+    :region "East"
+    :sales 250000}])
+
+(defc commission-rate .05)
+
+;;; input handlers
+
+(defn v [e] (-> this .-target js/jQuery .val))
+
+(defn change-commission! [e]
+  (reset! commission-rate (new js/Number (v e))))
+
+(defn change-sales! [idx e]
+  (swap! persons assoc-in [idx :sales] (v e)))
+
+;;; markup
+
+(html
+  (head
+    (title "Sales People"))
+  (body
+    (div
+      (label (strong "Commission Rate: "))
+      (input :type "text" :value commission-rate :change change-commission!))
+    (table
+      (tr
+        (th "ID")
+        (th "Name")
+        (th "Region")
+        (th "Sales")
+        (th "Commission"))
+      (loop-tpl
+        :bindings [[idx {:keys [name region sales]}]
+                   (cell= (map-indexed vector persons))]
+        (tr
+          (td idx)
+          (td name)
+          (td region)
+          (td (input
+                :type "text"
+                :value sales
+                :input #(change-sales! @idx %)))
+          (td (cell= (gstr/format "%.2f" (* commission-rate sales)))))))
+
+    (pre :style "white-space:pre-wrap;"
+      (cell= (pr-str persons)))))
